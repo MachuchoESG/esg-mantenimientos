@@ -27,7 +27,7 @@ navigate("/dashboard");
   return (
     <div className="login-container">
       <div className="login-box">
-        <h2>Modulo de Mantenimientos</h2>
+        <h2>Módulo de Mantenimientos</h2>
 
         <form onSubmit={handleLogin}>
 
