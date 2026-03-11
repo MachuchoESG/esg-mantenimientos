@@ -2,6 +2,7 @@ import { useState } from "react";
 import { auth } from "./firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import logo from "../images/esg.png";
 
 export default function Login() {
 
@@ -10,23 +11,30 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
+    try {
 
-    await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
 
-navigate("/dashboard");
+      navigate("/dashboard");
 
-  } catch (error) {
-    console.log(error);
-    alert("Correo o contraseña incorrectos");
-  }
-};
+    } catch (error) {
+      console.log(error);
+      alert("Correo o contraseña incorrectos");
+    }
+  };
 
   return (
     <div className="login-container">
       <div className="login-box">
+
+        <img 
+          src={logo} 
+          alt="ESG Logo"
+          className="login-logo"
+        />
+
         <h2>Módulo de Mantenimientos</h2>
 
         <form onSubmit={handleLogin}>
@@ -45,9 +53,9 @@ navigate("/dashboard");
 
           <button type="submit">Ingresar</button>
 
-        <p style={{marginTop:"15px"}}>
+          <p style={{marginTop:"15px"}}>
             ¿No tienes cuenta? <a href="/register">Registrarse</a>
-        </p>
+          </p>
 
         </form>
       </div>

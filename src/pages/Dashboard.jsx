@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import FormularioMantenimiento from "./FormularioMantenimiento";
 import HistorialServicios from "./HistorialServicios";
 import Resumen from "./Resumen";
+import logo from "../images/esg.png";
 
 import "./dashboard.css";
 
@@ -24,9 +25,9 @@ export default function Dashboard() {
       {/* NAVBAR */}
       <header className="dashboard-nav">
         
-        <div className="nav-logo">
-          <h2>ServiceManager</h2>
-        </div>
+      <div className="nav-logo">
+      <img src={logo} alt="ESG Logo" className="nav-logo-img" />
+      </div>
 
         <nav className="nav-left">
           <button 

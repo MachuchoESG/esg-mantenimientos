@@ -11,6 +11,7 @@ import {
 
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import logo from "../images/logo-pdf.png";
 
 export default function HistorialServicios({ regresar }) {
 
@@ -32,87 +33,79 @@ export default function HistorialServicios({ regresar }) {
   /* ===============================
       CARGAR EMPRESAS
   =============================== */
+
   useEffect(() => {
+
     const cargarEmpresas = async () => {
-      try {
 
-        const snapshot = await getDocs(collection(db, "empresas"));
+      const snapshot = await getDocs(collection(db, "empresas"));
 
-        const lista = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+      const lista = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
 
-        setEmpresas(lista);
+      setEmpresas(lista);
 
-      } catch (error) {
-        console.error("Error cargando empresas:", error);
-      }
     };
 
     cargarEmpresas();
+
   }, []);
 
   /* ===============================
       CARGAR MANTENIMIENTOS
   =============================== */
+
   const cargarMantenimientos = async (cargarMas = false) => {
 
     if (!empresaSeleccionada) return;
 
-    try {
+    let q;
 
-      let q;
+    if (cargarMas && ultimoDoc) {
 
-      if (cargarMas && ultimoDoc) {
+      q = query(
+        collection(db, "mantenimientos"),
+        where("empresaId", "==", empresaSeleccionada),
+        startAfter(ultimoDoc),
+        limit(5)
+      );
 
-        q = query(
-          collection(db, "mantenimientos"),
-          where("empresaId", "==", empresaSeleccionada),
-          startAfter(ultimoDoc),
-          limit(5)
-        );
+    } else {
 
-      } else {
+      q = query(
+        collection(db, "mantenimientos"),
+        where("empresaId", "==", empresaSeleccionada),
+        limit(5)
+      );
 
-        q = query(
-          collection(db, "mantenimientos"),
-          where("empresaId", "==", empresaSeleccionada),
-          limit(5)
-        );
-
-      }
-
-      const snapshot = await getDocs(q);
-
-      const nuevos = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      // ordenar por fecha descendente
-      nuevos.sort((a, b) => {
-        if (!a.fecha || !b.fecha) return 0;
-        return b.fecha.localeCompare(a.fecha);
-      });
-
-      if (snapshot.docs.length < 5) {
-        setHayMas(false);
-      } else {
-        setHayMas(true);
-      }
-
-      setUltimoDoc(snapshot.docs[snapshot.docs.length - 1]);
-
-      if (cargarMas) {
-        setMantenimientos(prev => [...prev, ...nuevos]);
-      } else {
-        setMantenimientos(nuevos);
-      }
-
-    } catch (error) {
-      console.error("Error cargando mantenimientos:", error);
     }
+
+    const snapshot = await getDocs(q);
+
+    const nuevos = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    nuevos.sort((a, b) => {
+      if (!a.fecha || !b.fecha) return 0;
+      return b.fecha.localeCompare(a.fecha);
+    });
+
+    setUltimoDoc(snapshot.docs[snapshot.docs.length - 1]);
+
+    if (snapshot.docs.length < 5) {
+      setHayMas(false);
+    }
+
+    if (cargarMas) {
+      setMantenimientos(prev => [...prev, ...nuevos]);
+    } else {
+      setMantenimientos(nuevos);
+    }
+
   };
 
   useEffect(() => {
@@ -151,34 +144,115 @@ export default function HistorialServicios({ regresar }) {
   });
 
   /* ===============================
-      EXPORTAR PDF
+      PDF SERVICIO PROFESIONAL
   =============================== */
 
-  const exportarPDF = async () => {
-
-    const input = document.getElementById("detalle-pdf");
-
-    const canvas = await html2canvas(input);
-
-    const imgData = canvas.toDataURL("image/png");
+  const exportarPDFServicio = () => {
 
     const pdf = new jsPDF();
 
-    pdf.addImage(imgData, "PNG", 10, 10, 190, 0);
+    pdf.addImage(logo, "PNG", 10, 8, 40, 20);
+
+    pdf.setFontSize(16);
+    pdf.text("Reporte de Mantenimiento Preventivo", 60, 20);
+
+    pdf.setFontSize(12);
+
+    let y = 40;
+
+    const linea = (texto) => {
+
+      if (y > 270) {
+        pdf.addPage();
+        y = 20;
+      }
+
+      pdf.text(texto, 10, y);
+      y += 8;
+
+    };
+
+    linea(`Folio: ${detalleSeleccionado.folio}`);
+    linea(`Fecha: ${detalleSeleccionado.fecha}`);
+    linea(`Departamento: ${detalleSeleccionado.departamentoNombre}`);
+    linea(`Responsable: ${detalleSeleccionado.responsable}`);
+    linea(`Técnico: ${detalleSeleccionado.tecnico}`);
+
+    y += 5;
+    linea("Equipo:");
+
+    linea(`Marca: ${detalleSeleccionado.equipo?.marca}`);
+    linea(`Modelo: ${detalleSeleccionado.equipo?.modelo}`);
+    linea(`Serie: ${detalleSeleccionado.equipo?.noSerie}`);
+
+    y += 5;
+    linea("Checklist:");
+
+    detalleSeleccionado.checklist?.forEach((item) => {
+      linea(`${item.actividad}: ${item.ok ? "OK" : "NO"}`);
+    });
+
+    if (detalleSeleccionado.firmaTecnico) {
+
+      pdf.addPage();
+
+      pdf.text("Firma del Técnico", 10, 20);
+
+      pdf.addImage(detalleSeleccionado.firmaTecnico, "PNG", 10, 30, 80, 40);
+
+    }
 
     pdf.save(`Servicio_${detalleSeleccionado.folio}.pdf`);
+
+  };
+
+ /* ===============================
+    PDF HISTORIAL
+=============================== */
+
+  const exportarPDFHistorial = async () => {
+
+    const input = document.getElementById("tabla-pdf");
+
+    const canvas = await html2canvas(input, {
+      scale: 2
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    // LOGO
+    pdf.addImage(logo, "PNG", 10, 8, 40, 20);
+
+    // TITULO
+    pdf.setFontSize(18);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Historial de Servicios", 105, 20, { align: "center" });
+
+    // ancho de hoja
+    const pdfWidth = 190;
+
+    // altura proporcional
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    // TABLA
+    pdf.addImage(imgData, "PNG", 10, 35, pdfWidth, pdfHeight);
+
+    pdf.save("Historial_Servicios.pdf");
 
   };
 
   return (
 
     <div className="form-container">
+
       <div className="form-box">
 
         <h2>Historial de Servicios</h2>
 
-        {/* SELECT EMPRESA */}
         <select
+          className="select-empresa"
           value={empresaSeleccionada}
           onChange={(e)=>setEmpresaSeleccionada(e.target.value)}
         >
@@ -196,8 +270,6 @@ export default function HistorialServicios({ regresar }) {
         {empresaSeleccionada && (
 
           <>
-          
-          {/* FILTROS */}
 
           <div className="grid-4 filtros">
 
@@ -227,22 +299,27 @@ export default function HistorialServicios({ regresar }) {
 
           </div>
 
+          <button
+            className="btn-primario"
+            style={{marginBottom:"20px"}}
+            onClick={exportarPDFHistorial}
+          >
+            Exportar Historial PDF
+          </button>
 
-          {/* TABLA */}
+          {/* TABLA DESKTOP */}
 
-          <table className="tabla-historial">
+          <table className="tabla-historial desktop-table">
 
             <thead>
-
               <tr>
                 <th>Folio</th>
                 <th>Fecha</th>
-                <th>Área</th>
+                <th>Departamento</th>
                 <th>Responsable</th>
                 <th>Técnico</th>
                 <th>Acciones</th>
               </tr>
-
             </thead>
 
             <tbody>
@@ -253,7 +330,7 @@ export default function HistorialServicios({ regresar }) {
 
                   <td>{item.folio}</td>
                   <td>{item.fecha}</td>
-                  <td>{item.area}</td>
+                  <td>{item.departamentoNombre}</td>
                   <td>{item.responsable}</td>
                   <td>{item.tecnico}</td>
 
@@ -276,6 +353,66 @@ export default function HistorialServicios({ regresar }) {
 
           </table>
 
+          {/* TARJETAS MOBILE */}
+
+          <div className="mobile-cards">
+
+            {listaFiltrada.map(item => (
+
+              <div key={item.id} className="historial-card">
+
+                <div><strong>Folio:</strong> {item.folio}</div>
+                <div><strong>Fecha:</strong> {item.fecha}</div>
+                <div><strong>Departamento:</strong> {item.departamentoNombre}</div>
+                <div><strong>Responsable:</strong> {item.responsable}</div>
+                <div><strong>Técnico:</strong> {item.tecnico}</div>
+
+                <button
+                  className="btn-ver"
+                  onClick={()=>setDetalleSeleccionado(item)}
+                >
+                  Ver servicio
+                </button>
+
+              </div>
+
+            ))}
+
+          </div>
+
+          {/* TABLA OCULTA PARA PDF */}
+
+          <table id="tabla-pdf" style={{position:"absolute", left:"-9999px"}}>
+
+            <thead>
+              <tr>
+                <th>Folio</th>
+                <th>Fecha</th>
+                <th>Departamento</th>
+                <th>Responsable</th>
+                <th>Técnico</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {listaFiltrada.map(item => (
+
+                <tr key={item.id}>
+
+                  <td>{item.folio}</td>
+                  <td>{item.fecha}</td>
+                  <td>{item.departamentoNombre}</td>
+                  <td>{item.responsable}</td>
+                  <td>{item.tecnico}</td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
 
           {hayMas && (
 
@@ -288,17 +425,9 @@ export default function HistorialServicios({ regresar }) {
 
           )}
 
-          {listaFiltrada.length === 0 && (
-
-            <p style={{marginTop:20}}>
-              No hay registros para esta empresa
-            </p>
-
-          )}
-
           </>
-        )}
 
+        )}
 
         {/* MODAL DETALLE */}
 
@@ -306,12 +435,12 @@ export default function HistorialServicios({ regresar }) {
 
           <div className="modal-overlay">
 
-            <div className="modal-content" id="detalle-pdf">
+            <div className="modal-content">
 
               <h2>Servicio {detalleSeleccionado.folio}</h2>
 
               <p><strong>Fecha:</strong> {detalleSeleccionado.fecha}</p>
-              <p><strong>Área:</strong> {detalleSeleccionado.area}</p>
+              <p><strong>Departamento:</strong> {detalleSeleccionado.departamentoNombre}</p>
               <p><strong>Ubicación:</strong> {detalleSeleccionado.ubicacion}</p>
               <p><strong>Responsable:</strong> {detalleSeleccionado.responsable}</p>
               <p><strong>Técnico:</strong> {detalleSeleccionado.tecnico}</p>
@@ -321,12 +450,6 @@ export default function HistorialServicios({ regresar }) {
               <p>
                 {detalleSeleccionado.equipo?.marca} - {detalleSeleccionado.equipo?.modelo}
               </p>
-
-              <p>Serie: {detalleSeleccionado.equipo?.noSerie}</p>
-              <p>CPU: {detalleSeleccionado.equipo?.cpu}</p>
-              <p>RAM: {detalleSeleccionado.equipo?.ram}</p>
-              <p>Disco: {detalleSeleccionado.equipo?.disco}</p>
-              <p>Sistema: {detalleSeleccionado.equipo?.sistemaOperativo}</p>
 
               <h3>Checklist</h3>
 
@@ -340,7 +463,7 @@ export default function HistorialServicios({ regresar }) {
 
                 <button
                   className="btn-primario"
-                  onClick={exportarPDF}
+                  onClick={exportarPDFServicio}
                 >
                   Exportar PDF
                 </button>
@@ -361,7 +484,9 @@ export default function HistorialServicios({ regresar }) {
         )}
 
       </div>
+
     </div>
 
   );
+
 }

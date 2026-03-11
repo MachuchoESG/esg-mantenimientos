@@ -1,3 +1,7 @@
+*{
+  box-sizing:border-box;
+}
+
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
@@ -5,12 +9,16 @@ body {
 }
 
 /* CONTENEDOR GENERAL */
+
 .dashboard-container {
   min-height: 100vh;
   background-color: #f3f6fb !important;
+  display:flex;
+  flex-direction:column;
 }
 
-/* NAVBAR */
+/* ===== NAVBAR ===== */
+
 .dashboard-nav {
   background-color: #ffffff;
   display: flex;
@@ -21,6 +29,15 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+/* LOGO */
+
+.nav-logo{
+  display:flex;
+  align-items:center;
 }
 
 .nav-logo h2 {
@@ -28,8 +45,21 @@ body {
   color: #4f46e5;
 }
 
+.nav-logo-img{
+  width:140px;
+  max-width:100%;
+}
+
+/* BOTONES NAV */
+
+.nav-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
 .nav-left button {
-  margin-right: 15px;
   padding: 8px 18px;
   border: none;
   background: transparent;
@@ -48,6 +78,13 @@ body {
   color: white;
 }
 
+/* BOTON LOGOUT */
+
+.nav-right{
+  display:flex;
+  align-items:center;
+}
+
 .nav-right .logout-btn {
   background-color: #ef4444;
   color: white;
@@ -62,8 +99,92 @@ body {
   background-color: #dc2626;
 }
 
-/* CONTENIDO */
+/* ===== CONTENIDO ===== */
+
 .dashboard-content {
-  flex: 1;
-  padding: 40px;
+  flex:1;
+  padding:40px;
+  width:100%;
+  max-width:1400px;
+  margin:0 auto;
+}
+
+/* ===== RESPONSIVE ===== */
+
+/* tablets */
+
+@media (max-width:1024px){
+
+.dashboard-content{
+  padding:30px;
+}
+
+.nav-logo-img{
+  width:120px;
+}
+
+}
+
+/* celulares */
+
+@media (max-width:768px){
+
+.dashboard-nav{
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 15px;
+}
+
+/* LOGO */
+.nav-logo-img{
+  width:95px;
+}
+
+/* BOTONES */
+.nav-left{
+  display:flex;
+  gap:6px;
+  justify-content:flex-end;
+}
+
+/* BOTONES MÁS PEQUEÑOS */
+.nav-left button{
+  padding:6px 10px;
+  font-size:12px;
+}
+
+/* LOGOUT */
+.nav-right{
+  display:flex;
+  justify-content:flex-end;
+}
+
+.logout-btn{
+  padding:6px 10px;
+  font-size:12px;
+  width:auto; /* importante */
+}
+
+}
+
+/* celulares pequeños */
+
+@media (max-width:480px){
+
+.nav-logo-img{
+  width:100px;
+}
+
+.nav-left{
+  flex-direction:column;
+  align-items:flex-start;
+  width:100%;
+}
+
+.nav-left button{
+  width:100%;
+  text-align:left;
+}
+
 }
