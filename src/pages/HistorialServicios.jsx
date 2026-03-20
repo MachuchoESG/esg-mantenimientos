@@ -441,7 +441,7 @@ export default function HistorialServicios({ regresar }) {
 
               <p><strong>Fecha:</strong> {detalleSeleccionado.fecha}</p>
               <p><strong>Departamento:</strong> {detalleSeleccionado.departamentoNombre}</p>
-              <p><strong>Ubicación:</strong> {detalleSeleccionado.ubicacion}</p>
+              <p><strong>Area:</strong> {detalleSeleccionado.area}</p>
               <p><strong>Responsable:</strong> {detalleSeleccionado.responsable}</p>
               <p><strong>Técnico:</strong> {detalleSeleccionado.tecnico}</p>
 

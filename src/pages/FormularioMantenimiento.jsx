@@ -32,7 +32,7 @@ export default function FormularioMantenimiento() {
 
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState("");
   const [departamento, setDepartamento] = useState("");
-  const [ubicacion, setUbicacion] = useState("");
+  const [area, setArea] = useState(""); 
   const [responsable, setResponsable] = useState("");
   const [fecha, setFecha] = useState("");
   const [tecnico, setTecnico] = useState("");
@@ -103,22 +103,29 @@ export default function FormularioMantenimiento() {
   }, []);
 
   /* ================================
-      MANEJAR FOTOS
+      MANEJAR FOTOS 
   ================================ */
 
   const manejarFotos = (files) => {
 
-    const archivos = Array.from(files);
+    const nuevos = Array.from(files);
 
-    if (archivos.length > 4) {
-      alert("Solo puedes subir máximo 4 fotos");
+    if (fotos.length + nuevos.length > 8) {
+      alert("Máximo 8 fotos");
       return;
     }
 
-    setFotos(archivos);
+    const nuevasFotos = [...fotos, ...nuevos];
+    setFotos(nuevasFotos);
 
-    const previews = archivos.map(file => URL.createObjectURL(file));
-    setPreviewFotos(previews);
+    const previews = nuevos.map(file => URL.createObjectURL(file));
+    setPreviewFotos(prev => [...prev, ...previews]);
+  };
+
+  const eliminarFoto = (index) => {
+
+    setFotos(fotos.filter((_, i) => i !== index));
+    setPreviewFotos(previewFotos.filter((_, i) => i !== index));
 
   };
 
@@ -132,18 +139,24 @@ export default function FormularioMantenimiento() {
 
     for (let i = 0; i < fotos.length; i++) {
 
-      const imagenComprimida = await imageCompression(fotos[i], opcionesCompresion);
+      try {
 
-      const storageRef = ref(
-        storage,
-        `mantenimientos/${folio}/foto_${i}_${Date.now()}.jpg`
-      );
+        const imagenComprimida = await imageCompression(fotos[i], opcionesCompresion);
 
-      await uploadBytes(storageRef, imagenComprimida);
+        const storageRef = ref(
+          storage,
+          `mantenimientos/${folio}/foto_${i}_${Date.now()}.jpg`
+        );
 
-      const url = await getDownloadURL(storageRef);
+        await uploadBytes(storageRef, imagenComprimida);
 
-      urls.push(url);
+        const url = await getDownloadURL(storageRef);
+
+        urls.push(url);
+
+      } catch (error) {
+        console.error("Error subiendo imagen:", error);
+      }
 
     }
 
@@ -181,7 +194,7 @@ export default function FormularioMantenimiento() {
         departamentoId: departamentoSeleccionado?.departamentoId || "",
         departamentoNombre: departamento,
 
-        ubicacion,
+        area, // 🔥 CAMBIO
         responsable,
         fecha,
         tecnico,
@@ -225,7 +238,7 @@ export default function FormularioMantenimiento() {
 
   const handleGuardar = () => {
 
-    if (!empresaSeleccionada || !departamento || !ubicacion || !responsable || !fecha || !tecnico) {
+    if (!empresaSeleccionada || !departamento || !area || !responsable || !fecha || !tecnico) {
 
       setMensaje("Completa los campos obligatorios");
       return;
@@ -258,38 +271,28 @@ export default function FormularioMantenimiento() {
 
         <div className="grid-2">
 
-          <select
-            value={empresaSeleccionada}
-            onChange={(e)=>setEmpresaSeleccionada(e.target.value)}
-          >
+          <select value={empresaSeleccionada} onChange={(e)=>setEmpresaSeleccionada(e.target.value)}>
             <option value="">Seleccionar Empresa</option>
-
             {empresas.map(emp => (
               <option key={emp.id} value={emp.id}>
                 {emp.id} - {emp.empresas}
               </option>
             ))}
-
           </select>
 
-          <select
-            value={departamento}
-            onChange={(e)=>setDepartamento(e.target.value)}
-          >
+          <select value={departamento} onChange={(e)=>setDepartamento(e.target.value)}>
             <option value="">Seleccionar Departamento</option>
-
             {departamentos.map(dep => (
               <option key={dep.departamentoId} value={dep.departamentoNombre}>
                 {dep.departamentoNombre}
               </option>
             ))}
-
           </select>
 
           <input
-            placeholder="Ubicación"
-            value={ubicacion}
-            onChange={(e)=>setUbicacion(e.target.value)}
+            placeholder="Área"
+            value={area}
+            onChange={(e)=>setArea(e.target.value)}
           />
 
           <input
@@ -309,7 +312,6 @@ export default function FormularioMantenimiento() {
         <h3>Datos del Equipo</h3>
 
         <div className="grid-2">
-
           <input placeholder="Marca" value={marca} onChange={(e)=>setMarca(e.target.value)} />
           <input placeholder="Modelo" value={modelo} onChange={(e)=>setModelo(e.target.value)} />
           <input placeholder="No. Serie" value={noSerie} onChange={(e)=>setNoSerie(e.target.value)} />
@@ -318,7 +320,6 @@ export default function FormularioMantenimiento() {
           <input placeholder="Disco" value={disco} onChange={(e)=>setDisco(e.target.value)} />
           <input placeholder="Sistema Operativo" value={so} onChange={(e)=>setSo(e.target.value)} />
           <input placeholder="IP / Nombre Equipo" value={ipEquipo} onChange={(e)=>setIpEquipo(e.target.value)} />
-
         </div>
 
         <h3>Checklist</h3>
@@ -358,17 +359,13 @@ export default function FormularioMantenimiento() {
         <div className="foto-upload">
 
           <label className="btn-foto">
-
             Seleccionar fotografías
-
             <input
               type="file"
               accept="image/*"
               multiple
-              capture="environment"
               onChange={(e)=>manejarFotos(e.target.files)}
             />
-
           </label>
 
           {previewFotos.length > 0 && (
@@ -381,17 +378,40 @@ export default function FormularioMantenimiento() {
             }}>
 
               {previewFotos.map((foto,i)=>(
-                <img
-                  key={i}
-                  src={foto}
-                  alt="preview"
-                  style={{
-                    width:"90px",
-                    height:"90px",
-                    objectFit:"cover",
-                    borderRadius:"8px"
-                  }}
-                />
+
+                <div key={i} style={{ position:"relative" }}>
+
+                  <img
+                    src={foto}
+                    alt="preview"
+                    style={{
+                      width:"90px",
+                      height:"90px",
+                      objectFit:"cover",
+                      borderRadius:"8px"
+                    }}
+                  />
+
+                  <button
+                    onClick={()=>eliminarFoto(i)}
+                    style={{
+                      position:"absolute",
+                      top:"-5px",
+                      right:"-5px",
+                      background:"red",
+                      color:"white",
+                      border:"none",
+                      borderRadius:"50%",
+                      width:"20px",
+                      height:"20px",
+                      cursor:"pointer"
+                    }}
+                  >
+                    ×
+                  </button>
+
+                </div>
+
               ))}
 
             </div>
@@ -402,18 +422,13 @@ export default function FormularioMantenimiento() {
 
         <div className="grid-2">
 
-          <select
-            value={tecnico}
-            onChange={(e)=>setTecnico(e.target.value)}
-          >
+          <select value={tecnico} onChange={(e)=>setTecnico(e.target.value)}>
             <option value="">Seleccionar Técnico</option>
-
             {usuarios.map(user => (
               <option key={user.id} value={user.nombre}>
                 {user.nombre}
               </option>
             ))}
-
           </select>
 
           <input
@@ -425,14 +440,9 @@ export default function FormularioMantenimiento() {
         </div>
 
         {!confirmando && (
-
-          <button
-            className="btn-guardar"
-            onClick={handleGuardar}
-          >
+          <button className="btn-guardar" onClick={handleGuardar}>
             Guardar
           </button>
-
         )}
 
         {confirmando && (
@@ -443,16 +453,11 @@ export default function FormularioMantenimiento() {
               ¿Confirmar que el servicio fue realizado por <strong>{tecnico}</strong>?
             </p>
 
-            <button
-              onClick={guardarConfirmado}
-              disabled={cargando}
-            >
+            <button onClick={guardarConfirmado} disabled={cargando}>
               {cargando ? "Guardando..." : "Sí, confirmar"}
             </button>
 
-            <button
-              onClick={()=>setConfirmando(false)}
-            >
+            <button onClick={()=>setConfirmando(false)}>
               Cancelar
             </button>
 
