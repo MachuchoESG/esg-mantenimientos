@@ -52,11 +52,6 @@ export default function Login() {
           />
 
           <button type="submit">Ingresar</button>
-
-          <p style={{marginTop:"15px"}}>
-            ¿No tienes cuenta? <a href="/register">Registrarse</a>
-          </p>
-
         </form>
       </div>
     </div>

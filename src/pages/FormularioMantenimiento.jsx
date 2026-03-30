@@ -358,12 +358,24 @@ export default function FormularioMantenimiento() {
 
         <div className="foto-upload">
 
+          {/* BOTÓN GALERÍA */}
           <label className="btn-foto">
             Seleccionar fotografías
             <input
               type="file"
               accept="image/*"
               multiple
+              onChange={(e)=>manejarFotos(e.target.files)}
+            />
+          </label>
+
+          {/*  BOTÓN CÁMARA */}
+          <label className="btn-foto" style={{ marginLeft: "10px" }}>
+            Tomar foto
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
               onChange={(e)=>manejarFotos(e.target.files)}
             />
           </label>

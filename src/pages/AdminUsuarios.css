@@ -1,0 +1,232 @@
+/* CONTENEDOR GENERAL */
+.admin-container {
+  padding: 20px;
+  color: #000;
+}
+
+/* TITULO */
+.admin-container h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: black;
+}
+
+/* BUSCADOR */
+.buscador {
+  padding: 10px;
+  width: 250px;
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+/* BOTÓN CREAR */
+.btn-crear {
+  padding: 10px 15px;
+  background-color: #6c3cff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-crear:hover {
+  background-color: #5a2edb;
+}
+
+/* TABLA */
+.tabla-usuarios {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+  background-color: #ffffff; /* 🔥 blanco */
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* HEADER TABLA */
+.tabla-usuarios thead {
+  background-color: #2c2c3e; /* oscuro */
+  color: #fff;
+}
+
+.tabla-usuarios th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+}
+
+/* FILAS */
+.tabla-usuarios td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+/* HOVER FILAS */
+.tabla-usuarios tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+/* BOTONES ACCIONES */
+.tabla-usuarios button {
+  margin-right: 8px;
+  margin-top: 5px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* BOTÓN CAMBIAR PASSWORD */
+.tabla-usuarios button:first-child {
+  background-color: #00bcd4;
+  color: white;
+}
+
+.tabla-usuarios button:first-child:hover {
+  background-color: #0097a7;
+}
+
+/* BOTÓN DESHABILITAR */
+.tabla-usuarios button:last-child {
+  background-color: #ff4d4d;
+  color: white;
+}
+
+.tabla-usuarios button:last-child:hover {
+  background-color: #cc0000;
+}
+
+/* ================= MODAL ================= */
+
+/* MODAL FONDO */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* MODAL CONTENIDO */
+.modal-content {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 300px;
+  max-width: 90%;
+  text-align: center;
+}
+
+/* INPUT MODAL */
+.modal-content input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+/* BOTONES MODAL */
+.modal-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* BOTÓN GUARDAR */
+.modal-buttons button:first-child {
+  background-color: #6c3cff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modal-buttons button:first-child:hover {
+  background-color: #5a2edb;
+}
+
+/* BOTÓN CANCELAR */
+.modal-buttons button:last-child {
+  background-color: #777;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modal-buttons button:last-child:hover {
+  background-color: #555;
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* Tablets */
+@media (max-width: 768px) {
+  .buscador {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .btn-crear {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .tabla-usuarios th,
+  .tabla-usuarios td {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
+
+/* MÓVIL (aquí se pone pro) */
+@media (max-width: 600px) {
+
+  .tabla-usuarios thead {
+    display: none; /* 🔥 ocultamos encabezado */
+  }
+
+  .tabla-usuarios,
+  .tabla-usuarios tbody,
+  .tabla-usuarios tr,
+  .tabla-usuarios td {
+    display: block;
+    width: 100%;
+  }
+
+  .tabla-usuarios tr {
+    margin-bottom: 15px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  .tabla-usuarios td {
+    border: none;
+    padding: 8px 0;
+  }
+
+  /* etiquetas tipo "Nombre: ..." */
+  .tabla-usuarios td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    display: block;
+    color: #555;
+    margin-bottom: 3px;
+  }
+}
