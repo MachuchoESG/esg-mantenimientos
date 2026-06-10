@@ -50,7 +50,7 @@ export default function Resumen() {
 
       <h2>Resumen General</h2>
 
-      {/* 🔹 Cards */}
+      {/*  Cards */}
       <div className="cards">
         <div className="card">
           <h3>Total Servicios</h3>
@@ -58,7 +58,7 @@ export default function Resumen() {
         </div>
       </div>
 
-      {/* 🔹 Gráfica */}
+      {/*  Gráfica */}
       <div className="chart-container">
         <h3>Servicios por Empresa</h3>
 

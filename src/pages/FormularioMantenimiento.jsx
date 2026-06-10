@@ -10,6 +10,9 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 
+import { hayInternet } from "../utils/network";
+import { guardarOffline } from "../offlineService";
+
 import {
   ref,
   uploadBytes,
@@ -25,7 +28,6 @@ export default function FormularioMantenimiento() {
   const navigate = useNavigate();
 
   const [vistaActual, setVistaActual] = useState("formulario");
-
   const [empresas, setEmpresas] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
@@ -85,10 +87,9 @@ export default function FormularioMantenimiento() {
 
   useEffect(() => {
 
-    const cargarDatos = async () => {
-
+      const cargarDatos = async () => {
       const queryEmpresas = await getDocs(collection(db, "empresas"));
-      setEmpresas(queryEmpresas.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setEmpresas(queryEmpresas.docs.map(doc => ({...doc.data() })));
 
       const queryUsuarios = await getDocs(collection(db, "usuarios"));
       setUsuarios(queryUsuarios.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -168,73 +169,142 @@ export default function FormularioMantenimiento() {
       GUARDAR
   ================================ */
 
-  const guardarConfirmado = async () => {
+const ultimoFolio =
+  parseInt(localStorage.getItem("ultimoFolio")) || 0;
 
-    try {
+const siguienteFolio = ultimoFolio + 1;
 
-      setCargando(true);
-      setMensaje("");
+localStorage.setItem(
+  "ultimoFolio",
+  siguienteFolio
+);
 
-      const snapshot = await getDocs(collection(db, "mantenimientos"));
-      const total = snapshot.size + 1;
+const nuevoFolio =
+  `F-${String(siguienteFolio).padStart(3, "0")}`;
 
-      const nuevoFolio = `F-${String(total).padStart(3, "0")}`;
+const guardarConfirmado = async () => {
 
-      const departamentoSeleccionado = departamentos.find(
-        d => d.departamentoNombre === departamento
+  try {
+
+    setCargando(true);
+    setMensaje("");
+
+    // FOLIO OFFLINE REAL
+    const nuevoFolio = `F-${Date.now()}`;
+
+    const departamentoSeleccionado = departamentos.find(
+      d => d.departamentoNombre === departamento
+    );
+
+    // DATA
+    const data = {
+
+      folio: nuevoFolio,
+
+      empresaId: empresaSeleccionada,
+
+      departamentoId:
+        departamentoSeleccionado?.departamentoId || "",
+
+      departamentoNombre: departamento,
+
+      area,
+      responsable,
+      fecha,
+      tecnico,
+      usuario,
+
+      equipo: {
+        marca,
+        modelo,
+        noSerie,
+        cpu,
+        ram,
+        disco,
+        sistemaOperativo: so,
+        ipEquipo
+      },
+
+      checklist,
+
+      fotos: [],
+
+      estadoSync: 0,
+
+      creadoPor:
+        auth.currentUser?.uid || "desconocido",
+
+      createdAt: new Date().toISOString()
+    };
+
+    // =========================
+    // SIN INTERNET
+    // =========================
+
+    if (!hayInternet()) {
+
+      await guardarOffline(data);
+
+      setMensaje(
+        `Sin internet. Guardado localmente. Folio: ${nuevoFolio}`
       );
-
-      const urlsFotos = await subirFotos(nuevoFolio);
-
-      await addDoc(collection(db, "mantenimientos"), {
-
-        folio: nuevoFolio,
-        empresaId: empresaSeleccionada,
-
-        departamentoId: departamentoSeleccionado?.departamentoId || "",
-        departamentoNombre: departamento,
-
-        area, // 🔥 CAMBIO
-        responsable,
-        fecha,
-        tecnico,
-        usuario,
-
-        equipo: {
-          marca,
-          modelo,
-          noSerie,
-          cpu,
-          ram,
-          disco,
-          sistemaOperativo: so,
-          ipEquipo
-        },
-
-        checklist,
-        fotos: urlsFotos,
-
-        creadoPor: auth.currentUser?.uid || "desconocido",
-        createdAt: serverTimestamp()
-
-      });
-
-      setMensaje(`Mantenimiento guardado. Folio: ${nuevoFolio}`);
 
       setConfirmando(false);
       setFotos([]);
       setPreviewFotos([]);
+      setCargando(false);
+
+      return;
+    }
+
+    // =========================
+    // CON INTERNET
+    // =========================
+
+    try {
+
+      const urlsFotos = await subirFotos(nuevoFolio);
+
+      data.fotos = urlsFotos;
+
+      await addDoc(
+        collection(db, "mantenimientos"),
+        {
+          ...data,
+          estadoSync: 1,
+          createdAt: serverTimestamp()
+        }
+      );
+
+      setMensaje(
+        `Mantenimiento guardado. Folio: ${nuevoFolio}`
+      );
 
     } catch (error) {
 
       console.error(error);
-      setMensaje("Error al guardar");
 
+      // si falla internet a mitad
+      await guardarOffline(data);
+
+      setMensaje(
+        `Error de red. Guardado offline. Folio: ${nuevoFolio}`
+      );
     }
 
-    setCargando(false);
+    setConfirmando(false);
+    setFotos([]);
+    setPreviewFotos([]);
 
-  };
+  } catch (error) {
+
+    console.error(error);
+
+    setMensaje("Error al guardar");
+  }
+
+  setCargando(false);
+};
 
   const handleGuardar = () => {
 
@@ -270,12 +340,19 @@ export default function FormularioMantenimiento() {
         </div>
 
         <div className="grid-2">
-
-          <select value={empresaSeleccionada} onChange={(e)=>setEmpresaSeleccionada(e.target.value)}>
+          
+          <select
+            value={empresaSeleccionada}
+            onChange={(e)=>setEmpresaSeleccionada(e.target.value)}
+          >
             <option value="">Seleccionar Empresa</option>
-            {empresas.map(emp => (
-              <option key={emp.id} value={emp.id}>
-                {emp.id} - {emp.empresas}
+
+            {empresas.map((emp, index) => (
+              <option
+                key={index}
+                value={emp.empresas}
+              >
+                {emp.empresas}
               </option>
             ))}
           </select>
@@ -301,6 +378,7 @@ export default function FormularioMantenimiento() {
             onChange={(e)=>setResponsable(e.target.value)}
           />
 
+          <label>Fecha (dd/mm/aaaa)</label>
           <input
             type="date"
             value={fecha}
@@ -354,83 +432,117 @@ export default function FormularioMantenimiento() {
 
         ))}
 
-        {/* FOTOS */}
+{/* FOTOS */}
 
-        <div className="foto-upload">
+<div
+  className="foto-upload"
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: "15px"
+  }}
+>
 
-          {/* BOTÓN GALERÍA */}
-          <label className="btn-foto">
-            Seleccionar fotografías
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e)=>manejarFotos(e.target.files)}
-            />
-          </label>
+  {/* CONTENEDOR BOTONES */}
+  <div
+    style={{
+      display: "flex",
+      flexWrap: "wrap",
+      gap: "10px",
+      alignItems: "center"
+    }}
+  >
 
-          {/*  BOTÓN CÁMARA */}
-          <label className="btn-foto" style={{ marginLeft: "10px" }}>
-            Tomar foto
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e)=>manejarFotos(e.target.files)}
-            />
-          </label>
+    {/* BOTÓN GALERÍA */}
+    <label className="btn-foto">
+      Seleccionar fotografías
 
-          {previewFotos.length > 0 && (
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={(e) => manejarFotos(e.target.files)}
+      />
+    </label>
 
-            <div style={{
-              display:"flex",
-              flexWrap:"wrap",
-              gap:"10px",
-              marginTop:"10px"
-            }}>
+    {/* BOTÓN CÁMARA */}
+    <label className="btn-foto">
+      Tomar foto
 
-              {previewFotos.map((foto,i)=>(
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => manejarFotos(e.target.files)}
+      />
+    </label>
 
-                <div key={i} style={{ position:"relative" }}>
+  </div>
 
-                  <img
-                    src={foto}
-                    alt="preview"
-                    style={{
-                      width:"90px",
-                      height:"90px",
-                      objectFit:"cover",
-                      borderRadius:"8px"
-                    }}
-                  />
+  {/* PREVIEWS */}
+  {previewFotos.length > 0 && (
 
-                  <button
-                    onClick={()=>eliminarFoto(i)}
-                    style={{
-                      position:"absolute",
-                      top:"-5px",
-                      right:"-5px",
-                      background:"red",
-                      color:"white",
-                      border:"none",
-                      borderRadius:"50%",
-                      width:"20px",
-                      height:"20px",
-                      cursor:"pointer"
-                    }}
-                  >
-                    ×
-                  </button>
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "10px"
+      }}
+    >
 
-                </div>
+      {previewFotos.map((foto, i) => (
 
-              ))}
+        <div
+          key={i}
+          style={{
+            position: "relative"
+          }}
+        >
 
-            </div>
+          <img
+            src={foto}
+            alt="preview"
+            style={{
+              width: "90px",
+              height: "90px",
+              objectFit: "cover",
+              borderRadius: "8px",
+              border: "1px solid #ddd"
+            }}
+          />
 
-          )}
+          <button
+            type="button"
+            onClick={() => eliminarFoto(i)}
+            style={{
+              position: "absolute",
+              top: "-5px",
+              right: "-5px",
+              background: "red",
+              color: "white",
+              border: "none",
+              borderRadius: "50%",
+              width: "22px",
+              height: "22px",
+              cursor: "pointer",
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            ×
+          </button>
 
         </div>
+
+      ))}
+
+    </div>
+
+  )}
+
+</div>
 
         <div className="grid-2">
 
@@ -464,7 +576,7 @@ export default function FormularioMantenimiento() {
             <p>
               ¿Confirmar que el servicio fue realizado por <strong>{tecnico}</strong>?
             </p>
-
+            
             <button onClick={guardarConfirmado} disabled={cargando}>
               {cargando ? "Guardando..." : "Sí, confirmar"}
             </button>

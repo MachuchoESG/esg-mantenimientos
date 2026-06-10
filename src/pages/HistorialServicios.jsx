@@ -210,38 +210,104 @@ export default function HistorialServicios({ regresar }) {
     PDF HISTORIAL
 =============================== */
 
-  const exportarPDFHistorial = async () => {
+const exportarPDFHistorial = async () => {
 
-    const input = document.getElementById("tabla-pdf");
+  const input = document.getElementById("tabla-pdf");
 
-    const canvas = await html2canvas(input, {
-      scale: 2
-    });
+  // OBTENER NOMBRE REAL DE EMPRESA
+  const empresaObj = empresas.find(
+    emp =>
+      emp.id === empresaSeleccionada ||
+      emp.empresaId === empresaSeleccionada
+  );
 
-    const imgData = canvas.toDataURL("image/png");
+  const empresaNombre =
+    empresaObj?.empresas ||
+    empresaSeleccionada ||
+    "General";
 
-    const pdf = new jsPDF("p", "mm", "a4");
+  const canvas = await html2canvas(input, {
+    scale: 2
+  });
 
-    // LOGO
-    pdf.addImage(logo, "PNG", 10, 8, 40, 20);
+  const imgData = canvas.toDataURL("image/png");
 
-    // TITULO
-    pdf.setFontSize(18);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("Historial de Servicios", 105, 20, { align: "center" });
+  const pdf = new jsPDF("p", "mm", "a4");
 
-    // ancho de hoja
-    const pdfWidth = 190;
+  // =========================
+  // LOGO
+  // =========================
 
-    // altura proporcional
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  pdf.addImage(logo, "PNG", 10, 8, 40, 20);
 
-    // TABLA
-    pdf.addImage(imgData, "PNG", 10, 35, pdfWidth, pdfHeight);
+  // =========================
+  // TITULO
+  // =========================
 
-    pdf.save("Historial_Servicios.pdf");
+  pdf.setFontSize(18);
+  pdf.setFont("helvetica", "bold");
 
-  };
+  pdf.text(
+    "Historial de Servicios",
+    105,
+    18,
+    { align: "center" }
+  );
+
+  // =========================
+  // EMPRESA
+  // =========================
+
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "normal");
+
+  pdf.text(
+    `Empresa: ${empresaNombre}`,
+    105,
+    26,
+    { align: "center" }
+  );
+
+  // =========================
+  // FECHA
+  // =========================
+
+  const fechaActual = new Date().toLocaleDateString();
+
+  pdf.setFontSize(10);
+
+  pdf.text(
+    `Generado: ${fechaActual}`,
+    105,
+    32,
+    { align: "center" }
+  );
+
+  // =========================
+  // TABLA
+  // =========================
+
+  const pdfWidth = 190;
+
+  const pdfHeight =
+    (canvas.height * pdfWidth) / canvas.width;
+
+  pdf.addImage(
+    imgData,
+    "PNG",
+    10,
+    40,
+    pdfWidth,
+    pdfHeight
+  );
+
+  // =========================
+  // GUARDAR PDF
+  // =========================
+
+  pdf.save(`Historial_${empresaNombre}.pdf`);
+
+};
 
   return (
 
@@ -284,18 +350,27 @@ export default function HistorialServicios({ regresar }) {
               value={filtroResponsable}
               onChange={(e)=>setFiltroResponsable(e.target.value)}
             />
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
 
-            <input
-              type="date"
-              value={fechaInicio}
-              onChange={(e)=>setFechaInicio(e.target.value)}
-            />
+            <div>
+              <label>Fecha inicio</label>
+              <input
+                type="date"
+                value={fechaInicio}
+                onChange={(e)=>setFechaInicio(e.target.value)}
+              />
+            </div>
 
-            <input
-              type="date"
-              value={fechaFin}
-              onChange={(e)=>setFechaFin(e.target.value)}
-            />
+            <div>
+              <label>Fecha fin</label>
+              <input
+                type="date"
+                value={fechaFin}
+                onChange={(e)=>setFechaFin(e.target.value)}
+              />
+            </div>
+
+          </div>
 
           </div>
 

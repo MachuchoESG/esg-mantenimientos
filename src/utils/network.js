@@ -1,0 +1,1 @@
+export const hayInternet = () => navigator.onLine;
