@@ -14,13 +14,14 @@ import html2canvas from "html2canvas";
 import logo from "../images/logo-pdf.png";
 
 export default function HistorialServicios({ regresar }) {
-
   const [empresas, setEmpresas] = useState([]);
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState("");
 
   const [mantenimientos, setMantenimientos] = useState([]);
-  const [ultimoDoc, setUltimoDoc] = useState(null);
-  const [hayMas, setHayMas] = useState(true);
+
+  const [paginaActual, setPaginaActual] = useState(1);
+
+  const registrosPorPagina = 5;
 
   const [filtroFolio, setFiltroFolio] = useState("");
   const [filtroResponsable, setFiltroResponsable] = useState("");
@@ -30,9 +31,7 @@ export default function HistorialServicios({ regresar }) {
 
   const [detalleSeleccionado, setDetalleSeleccionado] = useState(null);
 
-  /* ===============================
-      CARGAR EMPRESAS
-  =============================== */
+  /*CARGAR EMPRESAS */
 
   useEffect(() => {
 
@@ -53,34 +52,16 @@ export default function HistorialServicios({ regresar }) {
 
   }, []);
 
-  /* ===============================
-      CARGAR MANTENIMIENTOS
-  =============================== */
+  /*CARGAR MANTENIMIENTOS */
 
-  const cargarMantenimientos = async (cargarMas = false) => {
+  const cargarMantenimientos = async () => {
 
     if (!empresaSeleccionada) return;
 
-    let q;
-
-    if (cargarMas && ultimoDoc) {
-
-      q = query(
-        collection(db, "mantenimientos"),
-        where("empresaId", "==", empresaSeleccionada),
-        startAfter(ultimoDoc),
-        limit(5)
-      );
-
-    } else {
-
-      q = query(
-        collection(db, "mantenimientos"),
-        where("empresaId", "==", empresaSeleccionada),
-        limit(5)
-      );
-
-    }
+    const q = query(
+      collection(db, "mantenimientos"),
+      where("empresaId", "==", empresaSeleccionada)
+    );
 
     const snapshot = await getDocs(q);
 
@@ -89,30 +70,15 @@ export default function HistorialServicios({ regresar }) {
       ...doc.data()
     }));
 
-    nuevos.sort((a, b) => {
-      if (!a.fecha || !b.fecha) return 0;
-      return b.fecha.localeCompare(a.fecha);
-    });
+    setMantenimientos(nuevos);
 
-    setUltimoDoc(snapshot.docs[snapshot.docs.length - 1]);
-
-    if (snapshot.docs.length < 5) {
-      setHayMas(false);
-    }
-
-    if (cargarMas) {
-      setMantenimientos(prev => [...prev, ...nuevos]);
-    } else {
-      setMantenimientos(nuevos);
-    }
+    setPaginaActual(1);
 
   };
-
   useEffect(() => {
 
     setMantenimientos([]);
-    setUltimoDoc(null);
-    setHayMas(true);
+    setPaginaActual(1);
 
     if (empresaSeleccionada) {
       cargarMantenimientos();
@@ -120,9 +86,7 @@ export default function HistorialServicios({ regresar }) {
 
   }, [empresaSeleccionada]);
 
-  /* ===============================
-      FILTROS
-  =============================== */
+  /*FILTROS*/
 
   const listaFiltrada = mantenimientos.filter(item => {
 
@@ -143,9 +107,30 @@ export default function HistorialServicios({ regresar }) {
 
   });
 
-  /* ===============================
-      PDF SERVICIO PROFESIONAL
-  =============================== */
+  const totalPaginas = Math.ceil(
+    listaFiltrada.length / registrosPorPagina
+  );
+
+  const indiceInicio =
+    (paginaActual - 1) * registrosPorPagina;
+
+  const registrosPagina = listaFiltrada.slice(
+    indiceInicio,
+    indiceInicio + registrosPorPagina
+  );
+
+  useEffect(() => {
+
+    setPaginaActual(1);
+
+  }, [
+    filtroFolio,
+    filtroResponsable,
+    fechaInicio,
+    fechaFin
+  ]);
+
+  /* PDF  */
 
   const exportarPDFServicio = () => {
 
@@ -240,10 +225,8 @@ const exportarPDFHistorial = async () => {
 
   pdf.addImage(logo, "PNG", 10, 8, 40, 20);
 
-  // =========================
-  // TITULO
-  // =========================
 
+  // TITULO
   pdf.setFontSize(18);
   pdf.setFont("helvetica", "bold");
 
@@ -350,8 +333,8 @@ const exportarPDFHistorial = async () => {
               value={filtroResponsable}
               onChange={(e)=>setFiltroResponsable(e.target.value)}
             />
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
 
+          <div className="filtros-fechas">
             <div>
               <label>Fecha inicio</label>
               <input
@@ -371,8 +354,7 @@ const exportarPDFHistorial = async () => {
             </div>
 
           </div>
-
-          </div>
+        </div>
 
           <button
             className="btn-primario"
@@ -389,6 +371,7 @@ const exportarPDFHistorial = async () => {
             <thead>
               <tr>
                 <th>Folio</th>
+                <th>Título</th>
                 <th>Fecha</th>
                 <th>Departamento</th>
                 <th>Responsable</th>
@@ -404,6 +387,7 @@ const exportarPDFHistorial = async () => {
                 <tr key={item.id}>
 
                   <td>{item.folio}</td>
+                  <td>{item.titulo || "Sin título"}</td>
                   <td>{item.fecha}</td>
                   <td>{item.departamentoNombre}</td>
                   <td>{item.responsable}</td>
@@ -432,9 +416,13 @@ const exportarPDFHistorial = async () => {
 
           <div className="mobile-cards">
 
-            {listaFiltrada.map(item => (
+            {registrosPagina.map(item => (
 
               <div key={item.id} className="historial-card">
+
+                <div className="historial-titulo">
+                  {item.titulo || "Sin título"}
+                </div>
 
                 <div><strong>Folio:</strong> {item.folio}</div>
                 <div><strong>Fecha:</strong> {item.fecha}</div>
@@ -448,6 +436,7 @@ const exportarPDFHistorial = async () => {
                 >
                   Ver servicio
                 </button>
+
 
               </div>
 
@@ -488,17 +477,48 @@ const exportarPDFHistorial = async () => {
             </tbody>
 
           </table>
+          
+        <div className="paginacion">
 
-          {hayMas && (
+          <button
+            className="pagina-flecha"
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual(paginaActual - 1)}
+          >
+            ←
+          </button>
+
+          {Array.from(
+            { length: totalPaginas },
+            (_, i) => i + 1
+          ).map(numero => (
 
             <button
-              className="btn-secundario"
-              onClick={()=>cargarMantenimientos(true)}
+              key={numero}
+              className={
+                numero === paginaActual
+                  ? "pagina activa"
+                  : "pagina"
+              }
+              onClick={() => setPaginaActual(numero)}
             >
-              Cargar más
+              {numero}
             </button>
 
-          )}
+          ))}
+
+          <button
+            className="pagina-flecha"
+            disabled={
+              paginaActual === totalPaginas ||
+              totalPaginas === 0
+            }
+            onClick={() => setPaginaActual(paginaActual + 1)}
+          >
+            →
+          </button>
+
+        </div>
 
           </>
 

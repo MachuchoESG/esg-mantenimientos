@@ -275,6 +275,64 @@ MODO MOVIL
   cursor: pointer;
 }
 
+/* ===== PAGINACION ===== */
+.paginacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  margin-top: 25px;
+}
+
+.pagina,
+.pagina-flecha {
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* Botones de número */
+.pagina {
+  background: white;
+  color: #1677ff;
+  border: 1px solid #e0e0e0;
+}
+
+.pagina:hover:not(.activa) {
+  background: #f1f5f9;
+}
+
+/* Página actual */
+.pagina.activa {
+  background: #d9dde2;
+  color: #374151;
+  cursor: default;
+}
+
+/* Flechas */
+.pagina-flecha {
+  background: #25292d;
+  color: white;
+}
+
+.pagina-flecha:hover:not(:disabled) {
+  background: #111827;
+}
+
+/* Flecha deshabilitada */
+.pagina-flecha:disabled {
+  background: #7b838b;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
 /* ===== MODAL ===== */
 
 .modal-overlay {
@@ -302,7 +360,7 @@ MODO MOVIL
 
 /* ===== RESPONSIVE ===== */
 
-/* tablets */
+/* ===== TABLETS ===== */
 
 @media (max-width:1024px){
 
@@ -316,32 +374,141 @@ MODO MOVIL
 
 }
 
-/* celulares */
+
+/* ===== CELULARES ===== */
 
 @media (max-width:768px){
 
-  .grid-4,
-  .grid-3,
-  .grid-2{
-    grid-template-columns:1fr;
+  .form-container{
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
   }
 
   .form-box{
-    padding:25px;
+    width: 100%;
+    max-width: none;
+    padding: 20px;
+    box-sizing: border-box;
   }
 
+  .form-box h2{
+    font-size: 22px;
+    margin-bottom: 18px;
+  }
+
+  /* Dos campos por fila */
+  .grid-2{
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Estos grids sí ocupan una columna */
+  .grid-3,
+  .grid-4{
+    grid-template-columns: 1fr;
+  }
+
+  .form-box input,
+  .form-box select{
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 14px;
+  }
+
+  .select-empresa{
+    max-width: none;
+    width: 100%;
+  }
+
+  .historial-card{
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .historial-card div{
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .btn-ver{
+    font-size: 13px;
+    padding: 7px 12px;
+  }
+}
+
+  /* Inputs y selects */
+  .form-box input,
+  .form-box select{
+    width:100%;
+    box-sizing:border-box;
+    font-size:14px;
+  }
+
+  /* Selector de empresa */
+  .select-empresa{
+    width:100%;
+    max-width:none;
+  }
+
+  /* Checklist */
   .checklist-row{
-    flex-direction:column;
-    align-items:flex-start;
+    grid-template-columns:1fr auto;
+    grid-template-areas:
+      "actividad check"
+      "obs obs";
+    gap:8px;
   }
 
   .checklist-row span{
+    grid-area:actividad;
+    width:100%;
+    font-size:14px;
+  }
+
+  .checklist-row input[type="checkbox"]{
+    grid-area:check;
+  }
+
+  .checklist-row input[type="text"]{
+    grid-area:obs;
     width:100%;
   }
 
-}
+  /* Historial - tarjetas */
+  .historial-card{
+    width:100%;
+    box-sizing:border-box;
+    padding:14px;
+    margin-bottom:12px;
+  }
 
-/* tablas en celular */
+  .historial-card div{
+    font-size:14px;
+    line-height:1.25;
+  }
+
+  /* Botón ver servicio */
+  .btn-ver{
+    font-size:13px;
+    padding:7px 12px;
+  }
+
+  /* Ocultar tabla de escritorio */
+  .desktop-table{
+    display:none;
+  }
+
+  /* Mostrar tarjetas */
+  .mobile-cards{
+    display:block;
+  
+  }
+
+
+/* ===== TABLAS EN CELULAR ===== */
 
 @media (max-width:600px){
 
@@ -352,37 +519,23 @@ MODO MOVIL
 
 }
 
-.select-empresa{
-max-width:300px;
-margin-bottom:15px;
-}
+
+/* ===== HISTORIAL ===== */
 
 .mobile-cards{
-display:none;
+  display:none;
 }
 
 .historial-card{
-background:white;
-border-radius:12px;
-padding:15px;
-margin-bottom:15px;
-box-shadow:0 4px 12px rgba(0,0,0,0.05);
+  background:white;
+  border-radius:12px;
+  padding:15px;
+  margin-bottom:15px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.05);
 }
 
 .card-row{
-margin-bottom:8px;
-}
-
-@media (max-width:768px){
-
-.desktop-table{
-display:none;
-}
-
-.mobile-cards{
-display:block;
-}
-
+  margin-bottom:8px;
 }
 
 /* ===== SUBIDA DE FOTOS ===== */
@@ -490,4 +643,140 @@ display:block;
 
 #tabla-pdf th {
   background: #eee;
+}
+
+/* =========================================
+   HISTORIAL RESPONSIVE - CARDS EN MOVIL
+========================================= */
+
+/* Por defecto */
+.mobile-cards {
+  display: none;
+}
+
+/* Escritorio */
+@media (min-width: 769px) {
+
+  .desktop-table {
+    display: table;
+  }
+
+  .mobile-cards {
+    display: none;
+  }
+
+}
+
+/* Móvil */
+@media (max-width: 768px) {
+
+  /* Ocultar tabla */
+  .desktop-table {
+    display: none !important;
+  }
+
+  /* Mostrar cards */
+  .mobile-cards {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+    margin-top: 15px;
+  }
+
+  /* Card individual */
+  .historial-card {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 13px 14px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eeeeee;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  /* Datos de la card */
+  .historial-card div {
+    margin-bottom: 4px;
+    color: #222;
+  }
+
+  .historial-card div:last-of-type {
+    margin-bottom: 8px;
+  }
+
+  .historial-card strong {
+    font-weight: 700;
+  }
+
+  /* Botón */
+  .historial-card .btn-ver {
+    font-size: 12px;
+    padding: 7px 12px;
+    margin-top: 3px;
+  }
+
+}
+
+/* =========================================
+   FILTROS COMPACTOS EN MOVIL
+========================================= */
+
+@media (max-width: 768px) {
+
+  .filtros {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .filtros input {
+    width: 100%;
+    min-width: 0;
+    font-size: 13px;
+  }
+
+  /* Contenedor de las fechas */
+  .filtros > div {
+    grid-column: span 2;
+  }
+
+}
+
+.filtros-fechas {
+  display: flex;
+  gap: 10px;
+}
+
+.filtros-fechas > div {
+  flex: 1;
+}
+
+.filtros-fechas label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+
+  .filtros-fechas {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .filtros-fechas input {
+    width: 100%;
+    font-size: 12px;
+  }
+
+}
+.historial-titulo {
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 8px !important;
 }

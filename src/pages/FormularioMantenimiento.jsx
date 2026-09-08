@@ -7,7 +7,10 @@ import {
   collection,
   getDocs,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  query,
+  where,
+  writeBatch
 } from "firebase/firestore";
 
 import { hayInternet } from "../utils/network";
@@ -34,6 +37,7 @@ export default function FormularioMantenimiento() {
 
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState("");
   const [departamento, setDepartamento] = useState("");
+  const [titulo, setTitulo] = useState("");
   const [area, setArea] = useState(""); 
   const [responsable, setResponsable] = useState("");
   const [fecha, setFecha] = useState("");
@@ -199,42 +203,44 @@ const guardarConfirmado = async () => {
     // DATA
     const data = {
 
-      folio: nuevoFolio,
+        folio: nuevoFolio,
 
-      empresaId: empresaSeleccionada,
+        titulo,
 
-      departamentoId:
-        departamentoSeleccionado?.departamentoId || "",
+        empresaId: empresaSeleccionada,
 
-      departamentoNombre: departamento,
+        departamentoId:
+          departamentoSeleccionado?.departamentoId || "",
 
-      area,
-      responsable,
-      fecha,
-      tecnico,
-      usuario,
+        departamentoNombre: departamento,
 
-      equipo: {
-        marca,
-        modelo,
-        noSerie,
-        cpu,
-        ram,
-        disco,
-        sistemaOperativo: so,
-        ipEquipo
-      },
+        area,
+        responsable,
+        fecha,
+        tecnico,
+        usuario,
 
-      checklist,
+        equipo: {
+          marca,
+          modelo,
+          noSerie,
+          cpu,
+          ram,
+          disco,
+          sistemaOperativo: so,
+          ipEquipo
+        },
 
-      fotos: [],
+        checklist,
 
-      estadoSync: 0,
+        fotos: [],
 
-      creadoPor:
-        auth.currentUser?.uid || "desconocido",
+        estadoSync: 0,
 
-      createdAt: new Date().toISOString()
+        creadoPor:
+          auth.currentUser?.uid || "desconocido",
+
+        createdAt: new Date().toISOString()
     };
 
     // =========================
@@ -308,11 +314,17 @@ const guardarConfirmado = async () => {
 
   const handleGuardar = () => {
 
-    if (!empresaSeleccionada || !departamento || !area || !responsable || !fecha || !tecnico) {
-
+    if (
+      !empresaSeleccionada ||
+      !departamento ||
+      !titulo ||
+      !area ||
+      !responsable ||
+      !fecha ||
+      !tecnico
+    ) {
       setMensaje("Completa los campos obligatorios");
       return;
-
     }
 
     setConfirmando(true);
@@ -339,53 +351,70 @@ const guardarConfirmado = async () => {
           Mantenimiento Preventivo
         </div>
 
-        <div className="grid-2">
+<div className="grid-2">
           
-          <select
-            value={empresaSeleccionada}
-            onChange={(e)=>setEmpresaSeleccionada(e.target.value)}
-          >
-            <option value="">Seleccionar Empresa</option>
+  <select
+    value={empresaSeleccionada}
+    onChange={(e)=>setEmpresaSeleccionada(e.target.value)}
+  >
+    <option value="">Empresa</option>
 
-            {empresas.map((emp, index) => (
-              <option
-                key={index}
-                value={emp.empresas}
-              >
-                {emp.empresas}
-              </option>
-            ))}
-          </select>
+    {empresas.map((emp, index) => (
+      <option
+        key={index}
+        value={emp.empresas}
+      >
+        {emp.empresas}
+      </option>
+    ))}
+  </select>
 
-          <select value={departamento} onChange={(e)=>setDepartamento(e.target.value)}>
-            <option value="">Seleccionar Departamento</option>
-            {departamentos.map(dep => (
-              <option key={dep.departamentoId} value={dep.departamentoNombre}>
-                {dep.departamentoNombre}
-              </option>
-            ))}
-          </select>
+  <select
+    value={departamento}
+    onChange={(e)=>setDepartamento(e.target.value)}
+  >
+    <option value="">Departamento</option>
 
-          <input
-            placeholder="Área"
-            value={area}
-            onChange={(e)=>setArea(e.target.value)}
-          />
+    {departamentos.map(dep => (
+      <option
+        key={dep.departamentoId}
+        value={dep.departamentoNombre}
+      >
+        {dep.departamentoNombre}
+      </option>
+    ))}
+  </select>
 
-          <input
-            placeholder="Responsable"
-            value={responsable}
-            onChange={(e)=>setResponsable(e.target.value)}
-          />
+</div>
 
-          <label>Fecha (dd/mm/aaaa)</label>
-          <input
-            type="date"
-            value={fecha}
-            onChange={(e)=>setFecha(e.target.value)}
-          />
+<input
+  className="titulo-mantenimiento"
+  placeholder="Título del mantenimiento"
+  value={titulo}
+  onChange={(e)=>setTitulo(e.target.value)}
+/>
 
-        </div>
+  <div className="grid-2">
+
+      <input
+        placeholder="Área"
+        value={area}
+        onChange={(e)=>setArea(e.target.value)}
+      />
+
+      <input
+        placeholder="Responsable"
+        value={responsable}
+        onChange={(e)=>setResponsable(e.target.value)}
+      />
+
+      <input
+        type="date"
+        value={fecha}
+        onChange={(e)=>setFecha(e.target.value)}
+      />
+
+  </div>
 
         <h3>Datos del Equipo</h3>
 
@@ -547,7 +576,7 @@ const guardarConfirmado = async () => {
         <div className="grid-2">
 
           <select value={tecnico} onChange={(e)=>setTecnico(e.target.value)}>
-            <option value="">Seleccionar Técnico</option>
+            <option value="">Técnico</option>
             {usuarios.map(user => (
               <option key={user.id} value={user.nombre}>
                 {user.nombre}
@@ -598,5 +627,4 @@ const guardarConfirmado = async () => {
     </div>
 
   );
-
 }
